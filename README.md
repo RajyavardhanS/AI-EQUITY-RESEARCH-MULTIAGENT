@@ -1,4 +1,4 @@
-# 📊 AI-EQUITY-RESEARCH-MULTIAGENT — Autonomous Multi-Agent Equity Research Engine
+# 📊 AI-EQUITY-RESEARCH-MULTIAGEN
 
 ![Status](https://img.shields.io/badge/status-active-success)
 ![Python](https://img.shields.io/badge/Python-3.11-blue)
