@@ -1,5 +1,7 @@
 import sys
 sys.path.append(".")
+import os
+os.makedirs("data", exist_ok=True)
 
 from datetime import datetime
 from scrapers.yahoo_scraper import get_stock_data
