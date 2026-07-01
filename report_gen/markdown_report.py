@@ -1,8 +1,6 @@
 import sys
 sys.path.append(".")
 import os
-os.makedirs("data", exist_ok=True)
-
 from datetime import datetime
 from scrapers.yahoo_scraper import get_stock_data
 from scrapers.edgar_scraper import get_recent_filings, get_filing_text, clean_filing_text
@@ -11,6 +9,8 @@ from agents.risk_agent import analyze_risks
 from agents.valuation_agent import analyze_valuation
 from agents.news_agent import analyze_news_sentiment
 from analytics.financial_analyzer import build_analytics_summary
+
+os.makedirs("data", exist_ok=True)
 
 
 def generate_report(ticker, company_name, peers=None):
