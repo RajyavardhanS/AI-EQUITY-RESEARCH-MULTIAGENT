@@ -1,5 +1,3 @@
-# 📊 AI-EQUITY-RESEARCH-MULTIAGEN
-
 ![Status](https://img.shields.io/badge/status-active-success)
 ![Python](https://img.shields.io/badge/Python-3.11-blue)
 ![LLM](https://img.shields.io/badge/LLM-Groq%20Llama%203.3-orange)
@@ -10,350 +8,196 @@
 
 ---
 
+# 📊 AI Based Equity Research Multi-Agent
+
 ## 🌍 Overview
 
 **AI-EQUITY-RESEARCH-MULTIAGENT** is an autonomous institutional-style equity research pipeline designed to replicate how real-world analysts evaluate public companies.
 
 The system combines:
+* **Live market intelligence** from Yahoo Finance
+* **SEC filing analysis** via direct EDGAR API integration
+* **Real-time financial news** from NewsAPI
+* **LLM-powered reasoning agents** running on Groq (Llama 3.3 70B)
 
-* **Live market intelligence**
-* **SEC filing analysis**
-* **Real-time financial news**
-* **LLM-powered reasoning agents**
+to generate structured, analyst-grade equity research reports in under 60 seconds.
 
-to generate structured, analyst-grade equity research reports.
-
-Unlike a traditional chatbot, this system is built as a **modular pipeline**, where every stage is independently testable, observable, and replaceable.
+Unlike a traditional chatbot, this system is built as a **modular pipeline**, where every stage is independently testable, observable, and replaceable. Each agent knows nothing about the others — if one data source fails, only that section degrades, the rest of the report still runs.
 
 ---
 
 ## ⚡ Key Features
 
-| Feature                      | Description                                                   |
-| ---------------------------- | ------------------------------------------------------------- |
-| 📈 Live Market Data          | Pulls stock price, P/E, EPS, margins, debt ratios, market cap |
-| 📑 SEC Filing Parser         | Retrieves latest 10-K filings directly from SEC EDGAR         |
-| ⚠️ Risk Intelligence Agent   | Extracts and analyzes company-specific risk factors           |
-| 📰 News Sentiment Agent      | Pulls latest news and performs sentiment analysis             |
-| 💰 Valuation Agent           | Generates analyst-style valuation thesis                      |
-| 🧠 Multi-Agent Architecture  | Independent LLM agents for each research dimension            |
-| 📊 Streamlit Dashboard       | Interactive frontend for report generation                    |
-| 📄 Markdown Report Generator | Generates structured downloadable reports                     |
+| Feature | Description |
+| --- | --- |
+| 📈 Live Market Data | Pulls stock price, P/E, EPS, margins, debt ratios, market cap — no API key required |
+| 📑 SEC Filing Parser | Retrieves and cleans latest 10-K filings directly from SEC EDGAR |
+| ⚠️ Risk Intelligence Agent | Extracts top 5 company-specific risk factors from actual filing text |
+| 📰 News Sentiment Agent | Pulls latest headlines and classifies Bullish / Bearish / Neutral |
+| 💰 Valuation Agent | Generates analyst-style valuation thesis with peer comparison and directional call |
+| 📊 Analytics Layer | Formats raw numbers, calculates QoQ growth rates, runs peer benchmarking |
+| 🧠 Multi-Agent Architecture | Independent LLM agents for each research dimension — stateless and composable |
+| 🖥️ Streamlit Dashboard | Interactive frontend: enter ticker, generate report, download in one click |
+| 📄 Markdown Report Generator | Structured downloadable reports with tables, trend data, and AI analysis |
 
 ---
 
-## 🧠 Multi-Agent Architecture
+## 🏗️ System Architecture
 
-Traditional stock research tools rely on one model for everything.
-
-This system separates responsibilities:
-
-### 1. Valuation Agent
-
-Reasons over structured financial metrics.
-
-Analyzes:
-
-* Revenue quality
-* Profitability
-* Valuation multiples
-* Debt strength
-
----
-
-### 2. Risk Agent
-
-Reads actual SEC filing text.
-
-Finds:
-
-* Operational risks
-* Legal risks
-* Competitive threats
-* Macro vulnerabilities
-
----
-
-### 3. News Agent
-
-Processes live news.
-
-Outputs:
-
-* Sentiment classification
-* Key catalysts
-* Recent developments
-
----
-
-## 🏗 System Architecture
-
-```text id="sys001"
-User Input (Ticker)
-        ↓
-+------------------------+
-| Data Collection Layer  |
-|------------------------|
-| Yahoo Finance          |
-| SEC EDGAR              |
-| NewsAPI                |
-+------------------------+
-        ↓
-+------------------------+
-| AI Agent Layer         |
-|------------------------|
-| Valuation Agent        |
-| Risk Agent             |
-| News Agent             |
-+------------------------+
-        ↓
-+------------------------+
-| Report Orchestrator    |
-+------------------------+
-        ↓
-+------------------------+
-| Streamlit UI           |
-+------------------------+
+```
+User Input (Ticker + Company Name + Optional Peers)
+        |
+        ├── Yahoo Finance Scraper   →  Live market metrics
+        ├── SEC EDGAR Scraper       →  10-K filing text (cleaned)
+        └── NewsAPI Scraper         →  Recent headlines
+                  |
+        Analytics Layer
+        • Number formatting ($4.25T, 27.15%, 35.1x)
+        • QoQ revenue + earnings growth (pandas + numpy)
+        • Peer comparison table
+                  |
+        ┌─────────────────┬─────────────────┬─────────────────┐
+        │ Valuation Agent │ Risk Agent      │ News Agent      │
+        │ reasons over    │ reads 10-K text │ reads headlines │
+        │ financials      │ for risks       │ for sentiment   │
+        └─────────────────┴─────────────────┴─────────────────┘
+                  |
+        Report Generator (Orchestrator)
+                  |
+        Streamlit UI → rendered report + download
 ```
 
 ---
 
-## 📂 Project Structure
+## 🗂️ Project Structure
 
-```text id="proj001"
-AI-EQUITY-RESEARCH-MULTIAGENT/
-│
-├── agents/
-│   ├── valuation_agent.py
-│   ├── risk_agent.py
-│   ├── news_agent.py
+```
+equity-research-agent/
 │
 ├── scrapers/
-│   ├── yahoo_scraper.py
-│   ├── sec_scraper.py
-│   ├── news_scraper.py
+│   ├── yahoo_scraper.py        # Live market data via yfinance
+│   ├── edgar_scraper.py        # SEC EDGAR 10-K fetcher + HTML cleaner
+│   └── news_scraper.py         # NewsAPI with relevance filtering
+│
+├── analytics/
+│   └── financial_analyzer.py   # Number formatting, QoQ growth, peer comparison
+│
+├── agents/
+│   ├── risk_agent.py           # LLM reads 10-K → top 5 risk factors
+│   ├── valuation_agent.py      # LLM reasons over financials → valuation thesis
+│   └── news_agent.py           # LLM reads headlines → sentiment + themes
 │
 ├── report_gen/
-│   ├── generate_report.py
+│   └── markdown_report.py      # Orchestrator: calls all scrapers + agents
 │
-├── app.py
-├── requirements.txt
-├── .env
-└── README.md
+├── data/                       # Generated reports (gitignored)
+├── app.py                      # Streamlit web UI
+├── .env                        # API keys (gitignored)
+├── .gitignore
+└── requirements.txt
 ```
 
 ---
 
-## 🔌 Data Flow
+## 📄 Sample Report Sections
 
-```text id="flow001"
-User Input (Ticker)
-        ↓
-Fetch Live Financial Data
-        ↓
-Fetch SEC Filing
-        ↓
-Fetch News Data
-        ↓
-Valuation Agent Analysis
-        ↓
-Risk Agent Analysis
-        ↓
-News Agent Analysis
-        ↓
-Report Generator
-        ↓
-Streamlit Dashboard Output
-```
+| Section | What It Contains |
+| --- | --- |
+| Company Snapshot | 9 formatted live metrics — price, cap, P/E, margins, 52-week range, price position |
+| Quarterly Trend | Last 4 quarters of revenue + net income with QoQ growth rates |
+| Peer Comparison | Side-by-side table vs competitors with delta vs peer average |
+| Valuation Analysis | 5-paragraph thesis with directional call and price target reasoning |
+| Risk Factors | 5 risks from the actual 10-K filing — not generic, not fabricated |
+| News Sentiment | Bullish/Bearish/Neutral + narrative summary + key themes |
 
 ---
 
-## 🛠 Tech Stack
+## ⚙️ Tech Stack
 
-| Layer       | Technology           |
-| ----------- | -------------------- |
-| Backend     | Python 3.11          |
-| Market Data | yfinance             |
-| Filings     | SEC EDGAR API        |
-| News        | NewsAPI              |
-| Parsing     | BeautifulSoup4       |
-| LLM         | Groq (Llama 3.3 70B) |
-| Frontend    | Streamlit            |
-| Environment | python-dotenv        |
-
----
-
-## 🚀 Setup & Running
-
-### Prerequisites
-
-* Python 3.11+
-* Groq API Key
-* NewsAPI Key
+| Component | Tool | Why |
+| --- | --- | --- |
+| Market data | `yfinance` | Free, no API key, direct Yahoo Finance access |
+| Filing data | SEC EDGAR API | Free, official, all public 10-K/10-Q filings |
+| News | NewsAPI | Structured search with relevance filtering |
+| HTML parsing | BeautifulSoup4 | Strips SEC filing HTML to clean readable text |
+| Analytics | pandas + numpy | QoQ growth rates, peer comparison, number formatting |
+| LLM | Groq (Llama 3.3 70B) | Fast inference, generous free tier, high context window |
+| Frontend | Streamlit | Python → web UI with no HTML/CSS required |
+| Secrets | python-dotenv | API keys out of source code |
 
 ---
 
-### 1. Clone Repository
+## 🚀 Getting Started
 
-```bash id="clone001"
-git clone https://github.com/RajyavardhanS/AI-EQUITY-RESEARCH-MULTIAGENT.git
-cd AI-EQUITY-RESEARCH-MULTIAGENT
-```
-
----
-
-### 2. Install Dependencies
-
-```bash id="install001"
+### 1. Clone and set up environment
+```bash
+git clone https://github.com/yourusername/equity-research-agent.git
+cd equity-research-agent
+python -m venv venv
+venv\Scripts\activate        # Windows
+# source venv/bin/activate   # Mac/Linux
 pip install -r requirements.txt
 ```
 
----
+### 2. Get free API keys
+- **Groq** (LLM): [console.groq.com](https://console.groq.com) → API Keys → Create
+- **NewsAPI**: [newsapi.org](https://newsapi.org) → Get API Key
+- SEC EDGAR and Yahoo Finance require **no API key**
 
-### 3. Configure Environment Variables
-
-Create `.env`
-
-```env id="env001"
-GROQ_API_KEY=your_key_here
-NEWS_API_KEY=your_key_here
+### 3. Create `.env` file in project root
+```
+GROQ_API_KEY=your_groq_key_here
+NEWS_API_KEY=your_newsapi_key_here
 ```
 
----
-
-### 4. Run Application
-
-```bash id="run001"
+### 4. Run
+```bash
 streamlit run app.py
 ```
 
-Open:
+Open `http://localhost:8501`, enter a ticker (e.g. `AAPL`), company name (e.g. `Apple Inc`), optional peer tickers (e.g. `MSFT,GOOGL`), and click **Generate Report**.
 
-```text id="url001"
-http://localhost:8501
+---
+
+## 📦 Requirements
+
+```
+streamlit
+groq
+python-dotenv
+yfinance
+requests
+pandas
+numpy
+beautifulsoup4
+langchain-text-splitters
+```
+
+Install all:
+```bash
+pip install streamlit groq python-dotenv yfinance requests pandas numpy beautifulsoup4 langchain-text-splitters
 ```
 
 ---
 
-## 📊 Example Report Pipeline
+## ⚠️ Known Limitations
 
-Input:
+- Groq free tier token limits require truncating large filings; finding the correct section is therefore critical
+- NewsAPI free tier: up to 100 requests/day
+- Report generation is sequential (~60 seconds); parallel agent execution is a planned improvement
+- 
+---
+## 🗺️ Roadmap
 
-```python id="input001"
-ticker = "AAPL"
-```
-
-System fetches:
-
-```text id="data001"
-• Live stock metrics
-• Latest 10-K filing
-• Recent market news
-```
-
-Agents produce:
-
-```text id="agents001"
-• Valuation Thesis
-• Risk Breakdown
-• Sentiment Summary
-```
-
-Final Output:
-
-```text id="output001"
-Complete Equity Research Report
-```
+- [ ] Generalized 10-K section extraction (structural Item 1A/1B detection across all companies)
+- [ ] PDF export with formatted layout
+- [ ] Earnings call transcript analysis
+- [ ] Sector average benchmarking
+- [ ] Caching layer for repeat ticker requests
+- [ ] Async agent execution (parallel instead of sequential)
 
 ---
 
-## 🚧 Engineering Challenges Solved
+## 📌 Disclaimer
 
-### Challenge 1 — SEC Filing Section Extraction
-
-SEC filings contain repeated "Risk Factors" references.
-
-Solved by:
-
-* locating true structural Item 1A sections
-* filtering false TOC matches
-
----
-
-### Challenge 2 — LLM Provider Migration
-
-Gemini free-tier quota failures.
-
-Solution:
-
-* migrated to Groq
-* zero architecture rewrite required
-
----
-
-### Challenge 3 — Token Rate Limits
-
-Large 10-K filings exceeded token limits.
-
-Solution:
-
-* optimized chunk sizes
-* selective section extraction
-
----
-
-### Challenge 4 — Hallucination Prevention
-
-LLM generated fake risks on irrelevant excerpts.
-
-Solution:
-
-* explicit failure prompting
-* enforced “I don’t know” behavior
-
----
-
-### Challenge 5 — News Relevance Filtering
-
-Generic company names returned noisy results.
-
-Solution:
-
-* exact-phrase search
-* relevance sorting
-
----
-
-## ⚙️ Future Improvements
-
-| Improvement               | Description                        |
-| ------------------------- | ---------------------------------- |
-| 📄 PDF Export             | Generate downloadable PDF reports  |
-| 📊 Peer Benchmarking      | Compare against sector competitors |
-| 🎙 Earnings Call Analysis | Parse transcripts                  |
-| ⚡ Caching                 | Reduce repeated API calls          |
-| 📦 Portfolio Analysis     | Multi-stock analysis               |
-| 🧠 Better Risk Parsing    | Generalize across all SEC formats  |
-
----
-
-## 🎯 Why This Project Matters
-
-This project demonstrates:
-
-* Multi-agent orchestration
-* Financial AI systems
-* LLM reliability engineering
-* API integrations
-* Prompt engineering
-* Failure detection
-* Production debugging
-* Modular architecture
-
-This is designed as a **real-world institutional equity research simulator**, not just a stock analysis app.
-
----
-
-
-
----
+This tool is for educational and research purposes only. Reports are AI-generated and do not constitute financial advice. Always conduct your own research before making investment decisions.
