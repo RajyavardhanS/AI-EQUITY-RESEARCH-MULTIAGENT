@@ -4,30 +4,53 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def analyze_valuation(stock_data, ticker):
+def analyze_valuation(analytics_summary, ticker):
     client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-    prompt = f"""You are a financial valuation analyst. Below are the current financial metrics for {ticker} ({stock_data.get('company_name', 'N/A')}).
+    # Build peer comparison text if available
+    peer_text = ""
+    if analytics_summary.get("peer_comparison") is not None:
+        pc = analytics_summary["peer_comparison"]
+        peer_text = f"""
+Peer Comparison:
+{pc['df'].to_string()}
 
-Metrics:
-- Current Price: ${stock_data.get('current_price', 'N/A')}
-- Market Cap: ${stock_data.get('market_cap', 'N/A')}
-- P/E Ratio: {stock_data.get('pe_ratio', 'N/A')}
-- EPS: ${stock_data.get('eps', 'N/A')}
-- Revenue: ${stock_data.get('revenue', 'N/A')}
-- Profit Margin: {stock_data.get('profit_margin', 'N/A')}
-- Debt to Equity: {stock_data.get('debt_to_equity', 'N/A')}
-- 52-Week High: ${stock_data.get('52_week_high', 'N/A')}
-- 52-Week Low: ${stock_data.get('52_week_low', 'N/A')}
-- Sector: {stock_data.get('sector', 'N/A')}
+vs Peer Averages:
+- P/E ratio is {pc['pe_vs_peers']:+.2f} points vs peer average
+- Profit margin is {pc['margin_vs_peers']*100:+.2f}% vs peer average
+"""
 
-Based on these metrics, provide a valuation thesis covering:
-1. Is the stock currently overvalued, undervalued, or fairly valued? State your view clearly.
-2. What does the P/E ratio suggest about market expectations for this company?
-3. How healthy does the balance sheet look (profit margin, debt-to-equity)?
-4. Where does the current price sit relative to its 52-week range, and what might that suggest?
+    # Build historical financials text if available
+    hist_text = ""
+    if analytics_summary.get("historical_df") is not None:
+        hist_text = f"""
+Quarterly Revenue & Earnings Trend (last 4 quarters):
+{analytics_summary['historical_df'].to_string(index=False)}
+"""
 
-Keep your response to 4-5 short paragraphs, written like an equity analyst's valuation note.
+    prompt = f"""You are a financial valuation analyst. Below are the financial metrics for {ticker} ({analytics_summary.get('company_name', 'N/A')}), including peer comparison and historical trend data.
+
+Current Metrics:
+- Current Price: {analytics_summary['current_price']}
+- Market Cap: {analytics_summary['market_cap']}
+- P/E Ratio: {analytics_summary['pe_ratio']}
+- EPS: {analytics_summary['eps']}
+- Revenue: {analytics_summary['revenue']}
+- Profit Margin: {analytics_summary['profit_margin']}
+- Debt to Equity: {analytics_summary['debt_to_equity']}
+- 52-Week Range: {analytics_summary['52_week_low']} - {analytics_summary['52_week_high']}
+- Price Position: {analytics_summary['price_position']}
+{peer_text}
+{hist_text}
+
+Based on ALL of the above data, provide a valuation thesis covering:
+1. Is the stock overvalued, undervalued, or fairly valued? State clearly.
+2. What does the P/E premium/discount vs peers suggest?
+3. How do margins and debt compare to competitors?
+4. What does the quarterly revenue trend reveal?
+5. Where does the price sit in its 52-week range and what does that suggest?
+
+Write like a senior equity analyst — 5 short paragraphs, specific numbers, clear directional call.
 """
 
     response = client.chat.completions.create(
@@ -36,17 +59,3 @@ Keep your response to 4-5 short paragraphs, written like an equity analyst's val
     )
 
     return response.choices[0].message.content
-
-
-if __name__ == "__main__":
-    import sys
-    sys.path.append(".")
-    from scrapers.yahoo_scraper import get_stock_data
-
-    ticker = input("Enter ticker: ")
-    print("\nFetching stock data...")
-    stock_data = get_stock_data(ticker)
-
-    print("Analyzing valuation...\n")
-    result = analyze_valuation(stock_data, ticker)
-    print(result)
