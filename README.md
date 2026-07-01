@@ -121,6 +121,7 @@ equity-research-agent/
 | News | NewsAPI | Structured search with relevance filtering |
 | HTML parsing | BeautifulSoup4 | Strips SEC filing HTML to clean readable text |
 | Analytics | pandas + numpy | QoQ growth rates, peer comparison, number formatting |
+| Text splitting | LangChain | Chunks 10-K filings intelligently for generalized risk extraction |
 | LLM | Groq (Llama 3.3 70B) | Fast inference, generous free tier, high context window |
 | Frontend | Streamlit | Python → web UI with no HTML/CSS required |
 | Secrets | python-dotenv | API keys out of source code |
@@ -182,14 +183,14 @@ pip install streamlit groq python-dotenv yfinance requests pandas numpy beautifu
 
 ## ⚠️ Known Limitations
 
-- Groq free tier token limits require truncating large filings; finding the correct section is therefore critical
+- Groq free tier token limits require truncating large filings to ~20,000 characters per request
 - NewsAPI free tier: up to 100 requests/day
 - Report generation is sequential (~60 seconds); parallel agent execution is a planned improvement
-- 
+
 ---
+
 ## 🗺️ Roadmap
 
-- [ ] Generalized 10-K section extraction (structural Item 1A/1B detection across all companies)
 - [ ] PDF export with formatted layout
 - [ ] Earnings call transcript analysis
 - [ ] Sector average benchmarking
